@@ -1,0 +1,41 @@
+services:
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile.prod
+    restart: unless-stopped
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile.prod
+    environment:
+      - NODE_ENV=production
+      - MONGO_USERNAME
+      - MONGO_PWD
+    restart: unless-stopped
+    depends_on:
+      - db
+  db:
+    image: mongo
+    volumes:
+      - type: volume
+        source: dbprod
+        target: /data/db
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME
+      - MONGO_INITDB_ROOT_PASSWORD
+    restart: unless-stopped
+  reverse-proxy:
+    build:
+      context: ./reverse-proxy
+      dockerfile: Dockerfile.prod
+    ports:
+      - 80:80
+    restart: unless-stopped
+    depends_on:
+      - api
+      - db
+      - client
+volumes:
+  dbprod:
+    external: true

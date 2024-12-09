@@ -1,0 +1,46 @@
+services:
+  client:
+    stdin_open: true
+    tty: true
+    ports:
+      - "3000:3000"
+    environment:
+      - WATCHPACK_POLLING=true
+    build:
+      dockerfile: Dockerfile.dev
+      context: ./client
+    volumes:
+      - type: bind
+        source: ./client
+        target: /home/node
+      - type: volume
+        target: /home/node/node_modules
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile.dev
+    volumes:
+      - type: bind
+        source: ./api/src
+        target: /api/src
+    ports:
+      - 3001:80
+    depends_on:
+      - db
+  db:
+    image: mongo
+    volumes:
+      - type: volume
+        source: dbtest
+        target: /data/db
+  reverse-proxy:
+    build:
+      context: ./reverse-proxy
+      dockerfile: Dockerfile.dev
+    ports:
+      - 80:80
+    depends_on:
+      - api
+      - db
+volumes:
+  dbtest:
